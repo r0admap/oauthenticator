@@ -20,13 +20,18 @@ from traitlets import Unicode, Dict
 
 from .oauth2 import OAuthLoginHandler, OAuthenticator
 
+DINGTALK_AUTHORIZE_URL =  "https://oapi.dingtalk.com/connect/qrconnect"
+DINGTALK_ACCESS_TOKEN_URL = "https://oapi.dingtalk.com/sns/gettoken"
+DINGTALK_USER_CODE_URL = "https://oapi.dingtalk.com/sns/get_persistent_code"
+DINGTALK_SNS_TOKEN_URL = "https://oapi.dingtalk.com/sns/get_sns_token"
+DINGTALK_USER_URL = "https://oapi.dingtalk.com/sns/getuserinfo"
 
-class DingTalkEnvMixin(OAuth2Mixin):
-    _OAUTH_ACCESS_TOKEN_URL = os.environ.get('OAUTH2_TOKEN_URL', '')
-    _OAUTH_AUTHORIZE_URL = os.environ.get('OAUTH2_AUTHORIZE_URL', '')
+class DingTalkMixin(OAuth2Mixin):
+    _OAUTH_ACCESS_TOKEN_URL = DINGTALK_ACCESS_TOKEN_URL
+    _OAUTH_AUTHORIZE_URL = DINGTALK_AUTHORIZE_URL
 
 
-class DingTalkLoginHandler(OAuthLoginHandler, DingTalkEnvMixin):
+class DingTalkLoginHandler(OAuthLoginHandler, DingTalkMixin):
     pass
 
 
