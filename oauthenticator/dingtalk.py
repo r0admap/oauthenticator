@@ -24,7 +24,7 @@ DINGTALK_AUTHORIZE_URL =  "https://oapi.dingtalk.com/connect/qrconnect"
 DINGTALK_ACCESS_TOKEN_URL = "https://oapi.dingtalk.com/sns/gettoken"
 DINGTALK_USER_CODE_URL = "https://oapi.dingtalk.com/sns/get_persistent_code"
 DINGTALK_SNS_TOKEN_URL = "https://oapi.dingtalk.com/sns/get_sns_token"
-DINGTALK_USER_URL = "https://oapi.dingtalk.com/sns/getuserinfo"
+DINGTALK_USERDATA_URL = "https://oapi.dingtalk.com/sns/getuserinfo"
 
 class DingTalkMixin(OAuth2Mixin):
     _OAUTH_ACCESS_TOKEN_URL = DINGTALK_ACCESS_TOKEN_URL
@@ -45,30 +45,55 @@ class DingTalkOAuthenticator(OAuthenticator):
     login_handler = DingTalkLoginHandler
 
     userdata_url = Unicode(
-        os.environ.get('OAUTH2_USERDATA_URL', ''),
+        DINGTALK_USERDATA_URL,
         config=True,
         help="Userdata url to get user data login information"
     )
-    token_url = Unicode(
-        os.environ.get('OAUTH2_TOKEN_URL', ''),
+
+    access_token_url = Unicode(
+        DINGTALK_ACCESS_TOKEN_URL,
         config=True,
         help="Access token endpoint URL"
     )
 
+    sns_token_url = Unicode(
+        DINGTALK_SNS_TOKEN_URL,
+        config=True,
+        help="SNS token endpoint URL"
+    )
+
+    user_code_url = Unicode(
+        DINGTALK_USER_CODE_URL,
+        config=True,
+        help="User persistent_code endpoint URL"
+    )
+
     username_key = Unicode(
-        os.environ.get('OAUTH2_USERNAME_KEY', 'username'),
+        'openid',
         config=True,
         help="Userdata username key from returned json for USERDATA_URL"
     )
     userdata_params = Dict(
-        os.environ.get('OAUTH2_USERDATA_PARAMS', {}),
+        {maskedMobile,nick,openid,unionid,dingId},
         help="Userdata params to get user data login information"
     ).tag(config=True)
 
     userdata_method = Unicode(
-        os.environ.get('OAUTH2_USERDATA_METHOD', 'GET'),
+        'GET',
         config=True,
         help="Userdata method to get user data login information"
+    )
+
+    user_code_method = Unicode(
+        'POST',
+        config=True,
+        help="User persistent_code method"
+    )
+
+    sns_token_method = Unicode(
+        'POST',
+        config=True,
+        help="SNS token method"
     )
 
     @gen.coroutine
@@ -83,10 +108,10 @@ class DingTalkOAuthenticator(OAuthenticator):
             grant_type='authorization_code'
         )
 
-        if self.token_url:
-            url = self.token_url
+        if self.sns_token_url:
+            url = self.sns_token_url
         else:
-            raise ValueError("Please set the OAUTH2_TOKEN_URL environment variable")
+            raise ValueError("Please set the SNS_TOKEN_URL environment variable")
 
         b64key = base64.b64encode(
             bytes(
