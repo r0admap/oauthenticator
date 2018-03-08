@@ -38,7 +38,7 @@ class DingTalkLoginHandler(OAuthLoginHandler, DingTalkMixin):
 class DingTalkOAuthenticator(OAuthenticator):
 
     login_service = Unicode(
-        "DingTalkOAuth2",
+        "阿里钉钉扫码登录",
         config=True
     )
 
