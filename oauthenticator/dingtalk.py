@@ -32,8 +32,13 @@ class DingTalkMixin(OAuth2Mixin):
 
 
 class DingTalkLoginHandler(OAuthLoginHandler, DingTalkMixin):
-    pass
-
+    def authorize_redirect(self, *args, **kwargs):
+        """Add idp, skin to redirect params"""
+        extra_params = kwargs.setdefault('extra_params', {})
+        if self.authenticator.client_id:
+            extra_params["appid"] = self.authenticator.client_id
+            extra_params["scope"]='snsapi_login' 
+        return super().authorize_redirect(*args, **kwargs)
 
 class DingTalkOAuthenticator(OAuthenticator):
 
@@ -74,7 +79,8 @@ class DingTalkOAuthenticator(OAuthenticator):
         help="Userdata username key from returned json for USERDATA_URL"
     )
     userdata_params = Dict(
-        {maskedMobile,nick,openid,unionid,dingId},
+        # {maskedMobile,nick,openid,unionid,dingId}
+	{},
         help="Userdata params to get user data login information"
     ).tag(config=True)
 
@@ -101,6 +107,47 @@ class DingTalkOAuthenticator(OAuthenticator):
         code = handler.get_argument("code")
         # TODO: Configure the curl_httpclient for tornado
         http_client = AsyncHTTPClient()
+
+
+
+
+        params = dict(
+            appid=self.client_id,
+            appsecret=self.client_secret,
+        )
+
+        if self.access_token_url:
+            url = self.access_token_url
+        else:
+            raise ValueError("Please set the ACCESS_TOKEN_URL environment variable")
+
+
+
+        url = url_concat(DINGTALK_ACCESS_TOKEN_URL, params)
+
+	#print(self.url)
+
+        req = HTTPRequest(url,
+                          method="GET",
+                          #validate_cert=False,
+                          headers={"Accept": "application/json"}
+                          # body='' # Body is required for a POST...
+                          )
+
+
+
+
+        resp = yield http_client.fetch(req)
+
+        resp_json = json.loads(resp.body.decode('utf8', 'replace'))
+
+        access_token = resp_json['access_token']
+
+
+
+
+
+
 
         params = dict(
             redirect_uri=self.get_callback_url(handler),
@@ -155,8 +202,8 @@ class DingTalkOAuthenticator(OAuthenticator):
                           method=self.userdata_method,
                           headers=headers,
                           )
-        resp = yield http_client.fetch(req)
-        resp_json = json.loads(resp.body.decode('utf8', 'replace'))
+#        resp = yield http_client.fetch(req)
+#        resp_json = json.loads(resp.body.decode('utf8', 'replace'))
 
         if not resp_json.get(self.username_key):
             self.log.error("OAuth user contains no key %s: %s", self.username_key, resp_json)
