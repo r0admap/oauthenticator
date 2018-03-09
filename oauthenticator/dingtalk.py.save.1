@@ -83,7 +83,7 @@ class DingTalkOAuthenticator(OAuthenticator):
         help="Userdata username key from returned json for USERDATA_URL"
     )
     userdata_params = Dict(
-        # {maskedMobile,nick,openid,unionid,dingId}
+        {'maskedMobile','nick','openid','unionid','dingId'}
 	{},
         help="Userdata params to get user data login information"
     ).tag(config=True)
@@ -133,7 +133,7 @@ class DingTalkOAuthenticator(OAuthenticator):
 
         url = url_concat(DINGTALK_ACCESS_TOKEN_URL, params)
 
-        self.log.info(url)
+#	self.log.info("url")
 
         req = HTTPRequest(url,
                           headers=headers
@@ -143,25 +143,25 @@ class DingTalkOAuthenticator(OAuthenticator):
         resp = yield http_client.fetch(req)
 
         resp_json = json.loads(resp.body.decode('utf8', 'replace'))
-        self.log.info(resp_json)
 
         access_token = resp_json['access_token']
 
-        self.log.info("Access token acquired"+access_token)
+        self.log.info("Access token acquired")
 
 
 
-        params = dict(access_token=access_token)
-        url = url_concat(DINGTALK_USER_CODE_URL, params)
 
-        params = dict(tmp_auth_code=code)
-        self.log.info(url)
-        self.log.info(params)
 
-        if self.user_code_url:
-            url = self.user_code_url
+        params = dict(
+            redirect_uri=self.get_callback_url(handler),
+            code=code,
+            grant_type='authorization_code'
+        )
+
+        if self.sns_token_url:
+            url = self.sns_token_url
         else:
-            raise ValueError("Please set the DINGTALK_USER_CODE_URL environment variable")
+            raise ValueError("Please set the SNS_TOKEN_URL environment variable")
 
         b64key = base64.b64encode(
             bytes(
@@ -184,13 +184,10 @@ class DingTalkOAuthenticator(OAuthenticator):
         resp = yield http_client.fetch(req)
 
         resp_json = json.loads(resp.body.decode('utf8', 'replace'))
-        self.log.info(resp_json)
 
-        openid = resp_json['openid']
-        persistent_code = resp_json['persistent_code']
-        unionid = resp_json['unionid']
-        self.log.info(openid)
-
+        access_token = resp_json['access_token']
+        refresh_token = resp_json.get('refresh_token', None)
+        token_type = resp_json['token_type']
 #        scope = (resp_json.get('scope', '')).split(' ')
 
         # Determine who the logged in user is
