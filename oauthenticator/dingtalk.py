@@ -190,14 +190,14 @@ class DingTalkOAuthenticator(OAuthenticator):
 
 #SNS_TOKEN############
 
-    if self.sns_token_url:
+        if self.sns_token_url:
             url = self.sns_token_url
         else:
             raise ValueError("Please set the DINGTALK_SNS_TOKEN_URL variable")
 
         params = dict(access_token=access_token)
         url = url_concat(DINGTALK_SNS_TOKEN_URL, params)
-        params = {'openid': openid, 'persisitent_code': persisitent_code}
+        params = {'openid': openid, 'persistent_code': persistent_code}
         self.log.info(url)
         self.log.info(params)
 
