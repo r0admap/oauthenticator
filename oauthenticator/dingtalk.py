@@ -7,9 +7,11 @@ import json
 import os
 import base64
 import urllib
+import urllib3
 
 from tornado.auth import OAuth2Mixin
 from tornado import gen, web
+from tornado import escape
 
 from tornado.httputil import url_concat
 from tornado.httpclient import HTTPRequest, AsyncHTTPClient
@@ -116,6 +118,7 @@ class DingTalkOAuthenticator(OAuthenticator):
         headers = {
             "Accept": "application/json",
             "User-Agent": "JupyterHub",
+            "Content-Type": "application/json"
         }
 
 
@@ -149,36 +152,27 @@ class DingTalkOAuthenticator(OAuthenticator):
 
         self.log.info("Access token acquired"+access_token)
 
+#########
 
-
-        params = dict(access_token=access_token)
-        url = url_concat(DINGTALK_USER_CODE_URL, params)
-
-        params = dict(tmp_auth_code=code)
-        self.log.info(url)
-        self.log.info(params)
 
         if self.user_code_url:
             url = self.user_code_url
         else:
             raise ValueError("Please set the DINGTALK_USER_CODE_URL environment variable")
 
-        b64key = base64.b64encode(
-            bytes(
-                "{}:{}".format(self.client_id, self.client_secret),
-                "utf8"
-            )
-        )
+        params = dict(access_token=access_token)
+        url = url_concat(DINGTALK_USER_CODE_URL, params)
+        params = {'tmp_auth_code': code, 'temp': code}
+        self.log.info(url)
+        self.log.info(params)
 
-#        headers = {
-#            "Accept": "application/json",
-#            "User-Agent": "JupyterHub",
-#            "Authorization": "Basic {}".format(b64key.decode("utf8"))
-#        }
+        body_encode = escape.json_encode(params)
+        self.log.info(body_encode)
+
         req = HTTPRequest(url,
                           method="POST",
                           headers=headers,
-                          body=urllib.parse.urlencode(params)  # Body is required for a POST...
+                          body=escape.to_unicode(body_encode)
                           )
 
         resp = yield http_client.fetch(req)
@@ -192,6 +186,43 @@ class DingTalkOAuthenticator(OAuthenticator):
         self.log.info(openid)
 
 #        scope = (resp_json.get('scope', '')).split(' ')
+
+
+#SNS_TOKEN############
+
+    if self.sns_token_url:
+            url = self.sns_token_url
+        else:
+            raise ValueError("Please set the DINGTALK_SNS_TOKEN_URL variable")
+
+        params = dict(access_token=access_token)
+        url = url_concat(DINGTALK_SNS_TOKEN_URL, params)
+        params = {'openid': openid, 'persisitent_code': persisitent_code}
+        self.log.info(url)
+        self.log.info(params)
+
+        body_encode = escape.json_encode(params)
+        self.log.info(body_encode)
+
+        req = HTTPRequest(url,
+                          method="POST",
+                          headers=headers,
+                          body=escape.to_unicode(body_encode)
+                          )
+
+        resp = yield http_client.fetch(req)
+
+        resp_json = json.loads(resp.body.decode('utf8', 'replace'))
+        self.log.info(resp_json)
+
+        expires_in = resp_json['expires_in']
+        sns_token = resp_json['sns_token']
+        self.log.info(sns_token)
+
+################
+
+
+
 
         # Determine who the logged in user is
         headers = {
