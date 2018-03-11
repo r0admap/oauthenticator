@@ -242,10 +242,12 @@ class DingTalkOAuthenticator(OAuthenticator):
         resp_json = json.loads(resp.body.decode('utf8', 'replace'))
         self.log.info(resp_json)
 
-        openid = resp_json['openid']
-        nick = resp_json['nick']
-        unionid = resp_json['unionid']
-        dingId = resp_json['dingId']
+        user_info_json=resp_json('user_info')
+        openid = user_info_json['openid']
+        nick = user_info_json['nick']
+        unionid = user_info_json['unionid']
+        dingId = user_info_json['dingId']
+        maskedMobile = user_info_json['maskedMobile']
 
 ##################
         userdata = {
@@ -257,6 +259,7 @@ class DingTalkOAuthenticator(OAuthenticator):
                     'unionid': unionid,
                     'persistent_code': persistent_code,
                     'dingId': dingId,
+                    'maskedMobile': maskedMobile,
             }
         }
 
