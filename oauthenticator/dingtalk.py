@@ -249,7 +249,7 @@ class DingTalkOAuthenticator(OAuthenticator):
 
 ##################
         userdata = {
-            'name': openid),
+            'name': openid,
             'auth_state': {
                     'access_token': access_token,
                     'nick': nick,
