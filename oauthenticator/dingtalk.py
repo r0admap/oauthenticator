@@ -7,7 +7,6 @@ import json
 import os
 import base64
 import urllib
-import urllib3
 
 from tornado.auth import OAuth2Mixin
 from tornado import gen, web
@@ -163,7 +162,7 @@ class DingTalkOAuthenticator(OAuthenticator):
 
         params = dict(access_token=access_token)
         url = url_concat(DINGTALK_USER_CODE_URL, params)
-        params = {'tmp_auth_code': code, 'temp': code}
+        params = {'tmp_auth_code': code}
         self.log.info(url)
         self.log.info(params)
 
@@ -249,39 +248,34 @@ class DingTalkOAuthenticator(OAuthenticator):
         dingId = resp_json['dingId']
 
 ##################
-
-        # Determine who the logged in user is
-        headers = {
-            "Accept": "application/json",
-            "User-Agent": "JupyterHub",
-            "Authorization": "{} {}".format(token_type, access_token)
-        }
-        if self.userdata_url:
-            url = url_concat(self.userdata_url, self.userdata_params)
-        else:
-            raise ValueError("Please set the OAUTH2_USERDATA_URL environment variable")
-
-        req = HTTPRequest(url,
-                          method=self.userdata_method,
-                          headers=headers,
-                          )
-#        resp = yield http_client.fetch(req)
-#        resp_json = json.loads(resp.body.decode('utf8', 'replace'))
-
-        if not resp_json.get(self.username_key):
-            self.log.error("OAuth user contains no key %s: %s", self.username_key, resp_json)
-            return
-
-        return {
-            'name': resp_json.get(self.username_key),
+        userdata = {
+            'name': openid),
             'auth_state': {
-                'access_token': access_token,
-                'refresh_token': refresh_token,
-                'oauth_user': resp_json,
-                'scope': scope,
+                    'access_token': access_token,
+                    'nick': nick,
+                    'sns_token': sns_token,
+                    'unionid': unionid,
+                    'persistent_code': persistent_code,
+                    'dingId': dingId,
             }
         }
 
+        self.log.info(resp_json)
+        return userdata
+
+"""
+        return {
+            'name': openid,
+            'auth_state': {
+                'access_token': access_token,
+                'nick': nick,
+                'sns_token': sns_token,
+                'unionid': unionid,
+                'persistent_code': persistent_code,
+                'dingId': dingId,
+            }
+        }
+"""
 
 class LocalDingTalkOAuthenticator(LocalAuthenticator, DingTalkOAuthenticator):
 
