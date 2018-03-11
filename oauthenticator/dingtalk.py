@@ -247,7 +247,6 @@ class DingTalkOAuthenticator(OAuthenticator):
         nick = user_info_json['nick']
         unionid = user_info_json['unionid']
         dingId = user_info_json['dingId']
-        maskedMobile = user_info_json['maskedMobile']
 
 ##################
         userdata = {
@@ -259,7 +258,6 @@ class DingTalkOAuthenticator(OAuthenticator):
                     'unionid': unionid,
                     'persistent_code': persistent_code,
                     'dingId': dingId,
-                    'maskedMobile': maskedMobile,
             }
         }
 
