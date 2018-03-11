@@ -39,7 +39,7 @@ class DingTalkLoginHandler(OAuthLoginHandler, DingTalkMixin):
         extra_params = kwargs.setdefault('extra_params', {})
         if self.authenticator.client_id:
             extra_params["appid"] = self.authenticator.client_id
-            extra_params["scope"]='snsapi_login' 
+            extra_params["scope"]='snsapi_login'
         return super().authorize_redirect(*args, **kwargs)
 
 class DingTalkOAuthenticator(OAuthenticator):
@@ -121,6 +121,7 @@ class DingTalkOAuthenticator(OAuthenticator):
             "Content-Type": "application/json"
         }
 
+##ACCESS_TOKEN#########
 
         params = dict(
             appid=self.client_id,
@@ -152,7 +153,7 @@ class DingTalkOAuthenticator(OAuthenticator):
 
         self.log.info("Access token acquired"+access_token)
 
-#########
+##OPENID#######
 
 
         if self.user_code_url:
@@ -219,10 +220,35 @@ class DingTalkOAuthenticator(OAuthenticator):
         sns_token = resp_json['sns_token']
         self.log.info(sns_token)
 
-################
+##USER_DATA##############
+
+        params = dict(sns_token=sns_token)
+
+        if self.userdata_url:
+            url = self.userdata_url
+        else:
+            raise ValueError("Please set the DINGTALK_USERDATA_URL")
+
+        url = url_concat(DINGTALK_USERDATA_URL, params)
+
+        self.log.info(url)
+
+        req = HTTPRequest(url,
+                          headers=headers
+			  )
 
 
+        resp = yield http_client.fetch(req)
 
+        resp_json = json.loads(resp.body.decode('utf8', 'replace'))
+        self.log.info(resp_json)
+
+        openid = resp_json['openid']
+        nick = resp_json['nick']
+        unionid = resp_json['unionid']
+        dingId = resp_json['dingId']
+
+##################
 
         # Determine who the logged in user is
         headers = {
