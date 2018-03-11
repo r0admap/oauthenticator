@@ -242,7 +242,7 @@ class DingTalkOAuthenticator(OAuthenticator):
         resp_json = json.loads(resp.body.decode('utf8', 'replace'))
         self.log.info(resp_json)
 
-        user_info_json=resp_json('user_info')
+        user_info_json=resp_json['user_info']
         openid = user_info_json['openid']
         nick = user_info_json['nick']
         unionid = user_info_json['unionid']
